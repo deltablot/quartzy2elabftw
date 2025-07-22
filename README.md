@@ -11,7 +11,7 @@ This project uses `uv` as a dependency manager. See installation instructions: h
 
 ~~~bash
 # Clone this repository
-git clone git@git.deltablot.org:deltablot/quartzy2elabftw.git
+git clone git@github.com:deltablot/quartzy2elabftw.git
 
 # Get into the folder
 cd quartzy2elabftw

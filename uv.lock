@@ -102,7 +102,7 @@ wheels = [
 
 [[package]]
 name = "quartzy2elabftw"
-version = "0.1.0"
+version = "1.0.0"
 source = { virtual = "." }
 dependencies = [
     { name = "elabapi-python" },
