@@ -1,0 +1,12 @@
+[project]
+name = "quartzy2elabftw"
+version = "1.0.0"
+description = "Import and synchronize Quartzy entries into eLabFTW as read only resources."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "elabapi-python>=5.2.3",
+    "python-dotenv>=1.1.1",
+    "requests>=2.32.4",
+    "tqdm>=4.67.1",
+]
