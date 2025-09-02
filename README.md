@@ -134,8 +134,8 @@ crontab -e
 Run every day at 07:30 and append logs:
 
 ```cron
-# Every day at 07:30 - edit the path to the script's directory, same for /logs
-30 07 * * * /usr/bin/docker run --rm --env-file /path/to/quartzy2elabftw/.env --add-host=host.docker.internal:host-gateway --add-host=elab.local:host-gateway quartzy2elabftw >/dev/null 2>&1
+# Every day at 07:30 - edit the path to point to the script's directory
+30 07 * * * /usr/bin/docker run --rm --env-file /path/to/quartzy2elabftw/.env --add-host=host.docker.internal:host-gateway --add-host=elab.local:host-gateway quartzy2elabftw
 ```
 
 ## Caveats
