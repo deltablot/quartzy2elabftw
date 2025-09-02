@@ -119,6 +119,8 @@ When running locally, with eLabFTW on the same host (linux):
 
 ```bash
 docker run --rm --env-file .env --add-host=elab.local:host-gateway quartzy2elabftw --insecure
+# with mitmproxy setup
+# docker run --rm --env-file .env --add-host=host.docker.internal:host-gateway --add-host=elab.local:host-gateway -e HTTP_PROXY=http://host.docker.internal:8080 -e HTTPS_PROXY=http://host.docker.internal:8080 -e NO_PROXY= -e REQUESTS_CA_BUNDLE=/mitmproxy/mitmproxy-ca.pem -v /path/to/your/.mitmproxy:/mitmproxy:ro,Z quartzy2elabftw --insecure
 ```
 
 ## Automation
