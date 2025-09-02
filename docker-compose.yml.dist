@@ -2,6 +2,18 @@ services:
   quartzy2elabftw:
     image: quartzy2elabftw
     env_file: .env
+    environment:
+      HTTPS_PROXY: http://host.docker.internal:8080
+      HTTP_PROXY: http://host.docker.internal:8080
+      # for Python/Requests to trust mitmproxy's CA (inside container)
+      REQUESTS_CA_BUNDLE: /mitmproxy/mitmproxy-ca.pem
+      # NO_PROXY: ".quartzy.com,localhost,127.0.0.1,elab.local"
+    volumes:
+      # mount the host CA folder into the container at /mitmproxy
+      - ${HOME}/.mitmproxy:/mitmproxy:ro
     extra_hosts:
+      # make host.docker.internal resolve to the host
+      - "host.docker.internal:host-gateway"
+      # If your eLabFTW runs on the host and you use elab.local, keep this:
       - "elab.local:host-gateway"
-    # command: ["--insecure"] # uncomment if using a self-signed cert
+    #command: ["--insecure"] # uncomment if using a self-signed cert
