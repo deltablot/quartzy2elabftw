@@ -71,9 +71,20 @@ git clone git@github.com:deltablot/quartzy2elabftw.git
 # Get into the folder
 cd quartzy2elabftw
 
+# Repeat steps for setting .env file
+cp .env.dist .env
+chmod 600 .env
+$EDITOR .env
+
 # Build the image
 docker build -t quartzy2elabftw .
+```
 
+If you're running the sync with a local instance of eLabFTW, refer to this section: [Networking](#Networking).
+
+Otherwise, just run with the command:
+
+```bash
 # Run the sync (once)
 docker run --rm --env-file .env quartzy2elabftw
 ```
@@ -85,6 +96,11 @@ A sample config is provided in `docker-compose.yml.dist`. Copy it and edit to yo
 ```bash
 cp docker-compose.yml.dist docker-compose.yml
 $EDITOR docker-compose.yml
+
+# Repeat steps for setting .env file
+cp .env.dist .env
+chmod 600 .env
+$EDITOR .env
 ```
 
 Then run the sync script:
@@ -97,7 +113,7 @@ docker compose run --rm quartzy2elabftw
 
 When running locally, with eLabFTW on the same host (linux):
 
-- Set `ELABFTW_HOST_URL=https://your-domain.local:3148/api/v2/`
+- Make sure you previously set the host url in .env file: `ELABFTW_HOST_URL=https://your-domain.local:3148/api/v2/`
 - Use `--add-host=elab.local:host-gateway` (replace with your host name)
 - If your cert is self-signed, add `--insecure` flag (dev only)
 
