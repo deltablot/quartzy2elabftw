@@ -121,6 +121,21 @@ When running locally, with eLabFTW on the same host (linux):
 docker run --rm --env-file .env --add-host=elab.local:host-gateway quartzy2elabftw --insecure
 ```
 
+## Automation
+
+You can automate the sync with a cron job. Edit your user crontab:
+
+```bash
+crontab -e
+```
+
+Run every day at 07:30 and append logs:
+
+```cron
+# Every day at 07:30 - edit the path to the script's directory, same for /logs
+30 07 * * * /usr/bin/docker run --rm  --env-file /path/to/your/quartzy2elabftw/.env --add-host=host.docker.internal:host-gateway --add-host=elab.local:host-gateway quartzy2elabftw >> /path/to/your/quartzy2elabftw/logs/sync.log 2>&1```
+```
+
 ## Caveats
 
 No support for archived or deleted entries from Quartzy.
