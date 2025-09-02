@@ -131,7 +131,7 @@ You can automate the sync with a cron job. Edit your user crontab:
 crontab -e
 ```
 
-Run every day at 07:30 and append logs:
+Run every day at 07:30:
 
 ```cron
 # Every day at 07:30 - edit the path to point to the script's directory
