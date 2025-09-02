@@ -1,0 +1,7 @@
+services:
+  quartzy2elabftw:
+    image: quartzy2elabftw
+    env_file: .env
+    extra_hosts:
+      - "elab.local:host-gateway"
+    # command: ["--insecure"] # uncomment if using a self-signed cert

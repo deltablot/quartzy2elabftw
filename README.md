@@ -7,6 +7,8 @@ It creates the **Resource Categories** from the "**Type**" column of your Invent
 
 This project uses `uv` as a dependency manager. See installation instructions: https://github.com/astral-sh/uv?tab=readme-ov-file#installation
 
+This project can also be run with Docker, see [Run with Docker](#run-with-docker) section.
+
 ## Install dependencies
 
 ~~~bash
@@ -59,6 +61,49 @@ uv run main.py
 uv run main.py --verbose
 # you can also add --insecure flag in dev mode to disable SSL warnings
 ~~~
+
+## Run with Docker
+
+```bash
+# Clone the repository
+git clone git@github.com:deltablot/quartzy2elabftw.git
+
+# Get into the folder
+cd quartzy2elabftw
+
+# Build the image
+docker build -t quartzy2elabftw .
+
+# Run the sync (once)
+docker run --rm --env-file .env quartzy2elabftw
+```
+
+### With docker-compose
+
+A sample config is provided in `docker-compose.yml.dist`. Copy it and edit to your needs:
+
+```bash
+cp docker-compose.yml.dist docker-compose.yml
+$EDITOR docker-compose.yml
+```
+
+Then run the sync script:
+
+```bash
+docker compose run --rm quartzy2elabftw
+```
+
+### Networking
+
+When running locally, with eLabFTW on the same host (linux):
+
+- Set `ELABFTW_HOST_URL=https://your-domain.local:3148/api/v2/`
+- Use `--add-host=elab.local:host-gateway` (replace with your host name)
+- If your cert is self-signed, add `--insecure` flag (dev only)
+
+```bash
+docker run --rm --env-file .env --add-host=elab.local:host-gateway quartzy2elabftw --insecure
+```
 
 ## Caveats
 
