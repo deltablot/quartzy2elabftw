@@ -7,6 +7,8 @@ It creates the **Resource Categories** from the "**Type**" column of your Invent
 
 This project uses `uv` as a dependency manager. See installation instructions: https://github.com/astral-sh/uv?tab=readme-ov-file#installation
 
+This project can also be run with Docker, see [Run with Docker](#run-with-docker) section.
+
 ## Install dependencies
 
 ~~~bash
@@ -59,6 +61,82 @@ uv run main.py
 uv run main.py --verbose
 # you can also add --insecure flag in dev mode to disable SSL warnings
 ~~~
+
+## Run with Docker
+
+```bash
+# Clone the repository
+git clone git@github.com:deltablot/quartzy2elabftw.git
+
+# Get into the folder
+cd quartzy2elabftw
+
+# Repeat steps for setting .env file
+cp .env.dist .env
+chmod 600 .env
+$EDITOR .env
+
+# Build the image
+docker build -t quartzy2elabftw .
+```
+
+If you're running the sync with a local instance of eLabFTW, refer to this section: [Networking](#Networking).
+
+Otherwise, just run with the command:
+
+```bash
+# Run the sync (once)
+docker run --rm --env-file .env quartzy2elabftw
+```
+
+### With docker-compose
+
+A sample config is provided in `docker-compose.yml.dist`. Copy it and edit to your needs:
+
+```bash
+cp docker-compose.yml.dist docker-compose.yml
+$EDITOR docker-compose.yml
+
+# Repeat steps for setting .env file
+cp .env.dist .env
+chmod 600 .env
+$EDITOR .env
+```
+
+Then run the sync script:
+
+```bash
+docker compose run --rm quartzy2elabftw
+```
+
+### Networking
+
+When running locally, with eLabFTW on the same host (linux):
+
+- Make sure you previously set the host url in .env file: `ELABFTW_HOST_URL=https://your-domain.local:3148/api/v2/`
+- Use `--add-host=elab.local:host-gateway` (replace with your host name)
+- If your cert is self-signed, add `--insecure` flag (dev only)
+
+```bash
+docker run --rm --env-file .env --add-host=elab.local:host-gateway quartzy2elabftw --insecure
+# with mitmproxy setup
+# docker run --rm --env-file .env --add-host=host.docker.internal:host-gateway --add-host=elab.local:host-gateway -e HTTP_PROXY=http://host.docker.internal:8080 -e HTTPS_PROXY=http://host.docker.internal:8080 -e NO_PROXY= -e REQUESTS_CA_BUNDLE=/mitmproxy/mitmproxy-ca.pem -v /path/to/your/.mitmproxy:/mitmproxy:ro,Z quartzy2elabftw --insecure
+```
+
+## Automation
+
+You can automate the sync with a cron job. Edit your user crontab:
+
+```bash
+crontab -e
+```
+
+Run every day at 07:30:
+
+```cron
+# Every day at 07:30 - edit the path to point to the script's directory
+30 07 * * * /usr/bin/docker run --rm --env-file /path/to/quartzy2elabftw/.env --add-host=host.docker.internal:host-gateway --add-host=elab.local:host-gateway quartzy2elabftw
+```
 
 ## Caveats
 
