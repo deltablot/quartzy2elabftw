@@ -56,11 +56,24 @@ configuration.host = ELABFTW_HOST_URL
 configuration.debug = False
 # set to True if you have a proper certificate, here it is set to False to ease the test in dev
 configuration.verify_ssl = False
+# setup proxy to elabapi client's config
+proxy_url = os.getenv("HTTPS_PROXY") or os.getenv("HTTP_PROXY")
+if proxy_url:
+    configuration.proxy = proxy_url
+
+# set CA for both requests and the elabapi-client
+ca_path = os.getenv("CA_PATH") or os.getenv("REQUESTS_CA_BUNDLE")
+if ca_path:
+    configuration.ssl_ca_cert = ca_path
+    if not os.getenv("REQUESTS_CA_BUNDLE"):
+        os.environ["REQUESTS_CA_BUNDLE"] = ca_path
 
 # create an instance of the API class
 api_client = elabapi_python.ApiClient(configuration)
 # fix issue with Authorization header not being properly set by the generated lib
 api_client.set_default_header(header_name="Authorization", header_value=ELABFTW_API_KEY)
+# filter eLabFTW traffic in mitmproxy
+api_client.set_default_header(header_name="X-Proxy-Trace", header_value="quartzy2elabftw")
 
 itemsApi = elabapi_python.ItemsApi(api_client)
 itemsTypesApi = elabapi_python.ItemsTypesApi(api_client)
