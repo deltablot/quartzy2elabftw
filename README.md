@@ -36,6 +36,13 @@ ELABFTW_API_KEY=3-C5EF0776BCE0A85
 CATEGORIES=["Antibody", "Plasmid", "-80 boxes"]
 ~~~
 
+> [!WARNING]
+> Items will be imported into the team associated with the API key specified in the configuration!
+>
+> Ensure the API key is generated from an account logged into the correct receiving team.
+>
+> For instructions, see: https://doc.elabftw.net/api.html#generating-a-key
+
 You can use a `.env` file to store them permanently, see the [.env.dist](./.env.dist) file for reference.
 
 ~~~bash
