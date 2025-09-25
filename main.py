@@ -77,6 +77,7 @@ api_client.set_default_header(header_name="X-Proxy-Trace", header_value="quartzy
 
 itemsApi = elabapi_python.ItemsApi(api_client)
 itemsTypesApi = elabapi_python.ItemsTypesApi(api_client)
+infoApi = elabapi_python.InfoApi(api_client)
 
 #########################
 #     Logging Setup     #
@@ -112,6 +113,23 @@ handle_insecure_flag(args.insecure)
 
 # Set up logging with the verbose flag
 setup_logging(args.verbose)
+
+#################################
+#     Version Compatibility     #
+#################################
+
+# compatible up to version 5.3 due to major changes on items templates & categories. See blogpost about eLabFTW 5.3
+info_response = infoApi.get_info()
+info = info_response.to_dict()
+version_int = info.get("elabftw_version_int", 0)
+version = info.get("elabftw_version", "unknown")
+
+if version_int >= 50300:
+    sys.exit(
+        "ERROR: This script is not compatible with eLabFTW versions after 5.3.\n"
+        f"You are currently using version {version}, which introduced breaking changes in resources categories & templates.\n"
+        "A working version is on the way."
+    )
 
 #########################
 #     Load Categories   #
