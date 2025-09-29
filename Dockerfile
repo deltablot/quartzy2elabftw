@@ -1,5 +1,7 @@
 FROM python:3.13-slim
 
+RUN apt-get update && apt-get upgrade -y && apt-get clean
+
 COPY --from=ghcr.io/astral-sh/uv:0.8 /uv /uvx /bin/
 
 ENV HOME=/home/nobody
