@@ -54,8 +54,7 @@ configuration.api_key["api_key"] = ELABFTW_API_KEY
 configuration.api_key_prefix["api_key"] = "Authorization"
 configuration.host = ELABFTW_HOST_URL
 configuration.debug = False
-# set to True if you have a proper certificate, here it is set to False to ease the test in dev
-configuration.verify_ssl = False
+configuration.verify_ssl = True
 # setup proxy to elabapi client's config
 proxy_url = os.getenv("HTTPS_PROXY") or os.getenv("HTTP_PROXY")
 if proxy_url:
@@ -107,6 +106,7 @@ args = parse_args()
 def handle_insecure_flag(insecure):
     if insecure:
         urllib3.disable_warnings(category=urllib3.exceptions.InsecureRequestWarning)
+        configuration.verify_ssl = False
 
 # Handle the --insecure flag
 handle_insecure_flag(args.insecure)
