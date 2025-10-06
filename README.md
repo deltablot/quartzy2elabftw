@@ -78,13 +78,13 @@ git clone git@github.com:deltablot/quartzy2elabftw.git
 # Get into the folder
 cd quartzy2elabftw
 
-# Repeat steps for setting .env file
+# Build the image
+docker build -t quartzy2elabftw .
+
+# Create and edit the .env file (not included in the image)
 cp .env.dist .env
 chmod 600 .env
 $EDITOR .env
-
-# Build the image
-docker build -t quartzy2elabftw .
 ```
 
 If you're running the sync with a local instance of eLabFTW, refer to this section: [Networking](#Networking).
