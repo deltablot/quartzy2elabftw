@@ -48,13 +48,35 @@ except json.JSONDecodeError as e:
 ELABFTW_HOST_URL = os.getenv('ELABFTW_HOST_URL') or sys.exit('ELABFTW_HOST_URL environment variable not set')
 ELABFTW_API_KEY = os.getenv('ELABFTW_API_KEY') or sys.exit('ELABFTW_API_KEY environment variable not set')
 
+#########################
+#     ArgumentParser    #
+#########################
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Sync Quartzy Inventory to eLabFTW")
+    parser.add_argument('--verbose', action='store_true', help="Enable verbose output for debugging")
+    parser.add_argument('--insecure', action='store_true', help="Disable SSL verification and suppress SSL warnings")
+    return parser.parse_args()
+
+# parse command-line arguments
+args = parse_args()
+
+def handle_insecure_flag(insecure):
+    if insecure:
+        urllib3.disable_warnings(category=urllib3.exceptions.InsecureRequestWarning)
+
+# Handle the --insecure flag
+handle_insecure_flag(args.insecure)
+
 # Configure the api client
 configuration = elabapi_python.Configuration()
 configuration.api_key["api_key"] = ELABFTW_API_KEY
 configuration.api_key_prefix["api_key"] = "Authorization"
 configuration.host = ELABFTW_HOST_URL
 configuration.debug = False
-configuration.verify_ssl = True
+# set verify_ssl based on flag Before creating ApiClient
+configuration.verify_ssl = not args.insecure
+
 # setup proxy to elabapi client's config
 proxy_url = os.getenv("HTTPS_PROXY") or os.getenv("HTTP_PROXY")
 if proxy_url:
@@ -89,28 +111,6 @@ def setup_logging(verbose):
     else:
         logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
 
-def parse_args():
-    parser = argparse.ArgumentParser(description="Sync Quartzy Inventory to eLabFTW")
-    parser.add_argument('--verbose', action='store_true', help="Enable verbose output for debugging")
-    parser.add_argument('--insecure', action='store_true', help="Disable SSL verification and suppress SSL warnings")
-    return parser.parse_args()
-
-# parse command-line arguments
-args = parse_args()
-
-#########################
-#     Handle Insecure    #
-#########################
-
-# disable SSL warnings and verification if --insecure flag is set
-def handle_insecure_flag(insecure):
-    if insecure:
-        urllib3.disable_warnings(category=urllib3.exceptions.InsecureRequestWarning)
-        configuration.verify_ssl = False
-
-# Handle the --insecure flag
-handle_insecure_flag(args.insecure)
-
 # Set up logging with the verbose flag
 setup_logging(args.verbose)
 
@@ -124,12 +124,12 @@ info = info_response.to_dict()
 version_int = info.get("elabftw_version_int", 0)
 version = info.get("elabftw_version", "unknown")
 
-if version_int >= 50300:
-    sys.exit(
-        "ERROR: This script is not compatible with eLabFTW versions after 5.3.\n"
-        f"You are currently using version {version}, which introduced breaking changes in resources categories & templates.\n"
-        "A working version is on the way."
-    )
+# if version_int >= 50300:
+#     sys.exit(
+#         "ERROR: This script is not compatible with eLabFTW versions after 5.3.\n"
+#         f"You are currently using version {version}, which introduced breaking changes in resources categories & templates.\n"
+#         "A working version is on the way."
+#     )
 
 #########################
 #     Load Categories   #
