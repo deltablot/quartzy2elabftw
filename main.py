@@ -41,6 +41,9 @@ try:
 except json.JSONDecodeError as e:
     sys.exit(f"Failed to decode CATEGORIES environment variable: {e}")
 
+# Categories retrieved via API belong to the current team linked to TEAM_ID = "current"
+TEAM_ID = "current"
+
 #########################
 #      ELAB CONFIG      #
 #########################
@@ -48,13 +51,35 @@ except json.JSONDecodeError as e:
 ELABFTW_HOST_URL = os.getenv('ELABFTW_HOST_URL') or sys.exit('ELABFTW_HOST_URL environment variable not set')
 ELABFTW_API_KEY = os.getenv('ELABFTW_API_KEY') or sys.exit('ELABFTW_API_KEY environment variable not set')
 
+#########################
+#     ArgumentParser    #
+#########################
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Sync Quartzy Inventory to eLabFTW")
+    parser.add_argument('--verbose', action='store_true', help="Enable verbose output for debugging")
+    parser.add_argument('--insecure', action='store_true', help="Disable SSL verification and suppress SSL warnings")
+    return parser.parse_args()
+
+# parse command-line arguments
+args = parse_args()
+
+def handle_insecure_flag(insecure):
+    if insecure:
+        urllib3.disable_warnings(category=urllib3.exceptions.InsecureRequestWarning)
+
+# Handle the --insecure flag
+handle_insecure_flag(args.insecure)
+
 # Configure the api client
 configuration = elabapi_python.Configuration()
 configuration.api_key["api_key"] = ELABFTW_API_KEY
 configuration.api_key_prefix["api_key"] = "Authorization"
 configuration.host = ELABFTW_HOST_URL
 configuration.debug = False
-configuration.verify_ssl = True
+# set verify_ssl based on flag Before creating ApiClient
+configuration.verify_ssl = not args.insecure
+
 # setup proxy to elabapi client's config
 proxy_url = os.getenv("HTTPS_PROXY") or os.getenv("HTTP_PROXY")
 if proxy_url:
@@ -75,7 +100,7 @@ api_client.set_default_header(header_name="Authorization", header_value=ELABFTW_
 api_client.set_default_header(header_name="X-Proxy-Trace", header_value="quartzy2elabftw")
 
 itemsApi = elabapi_python.ItemsApi(api_client)
-itemsTypesApi = elabapi_python.ItemsTypesApi(api_client)
+resourcesCategoriesApi = elabapi_python.ResourcesCategoriesApi(api_client)
 infoApi = elabapi_python.InfoApi(api_client)
 
 #########################
@@ -89,47 +114,8 @@ def setup_logging(verbose):
     else:
         logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
 
-def parse_args():
-    parser = argparse.ArgumentParser(description="Sync Quartzy Inventory to eLabFTW")
-    parser.add_argument('--verbose', action='store_true', help="Enable verbose output for debugging")
-    parser.add_argument('--insecure', action='store_true', help="Disable SSL verification and suppress SSL warnings")
-    return parser.parse_args()
-
-# parse command-line arguments
-args = parse_args()
-
-#########################
-#     Handle Insecure    #
-#########################
-
-# disable SSL warnings and verification if --insecure flag is set
-def handle_insecure_flag(insecure):
-    if insecure:
-        urllib3.disable_warnings(category=urllib3.exceptions.InsecureRequestWarning)
-        configuration.verify_ssl = False
-
-# Handle the --insecure flag
-handle_insecure_flag(args.insecure)
-
 # Set up logging with the verbose flag
 setup_logging(args.verbose)
-
-#################################
-#     Version Compatibility     #
-#################################
-
-# compatible up to version 5.3 due to major changes on items templates & categories. See blogpost about eLabFTW 5.3
-info_response = infoApi.get_info()
-info = info_response.to_dict()
-version_int = info.get("elabftw_version_int", 0)
-version = info.get("elabftw_version", "unknown")
-
-if version_int >= 50300:
-    sys.exit(
-        "ERROR: This script is not compatible with eLabFTW versions after 5.3.\n"
-        f"You are currently using version {version}, which introduced breaking changes in resources categories & templates.\n"
-        "A working version is on the way."
-    )
 
 #########################
 #     Load Categories   #
@@ -166,8 +152,8 @@ logging.debug(f"Total filtered Quartzy items: {len(quartzy_items)}")
 #########################
 
 # Category Sync
-existing_types = itemsTypesApi.read_items_types()
-category_id_map = {cat.title: cat.id for cat in existing_types}
+existing_categories = resourcesCategoriesApi.read_team_resources_categories(TEAM_ID)
+category_id_map = {cat.title: cat.id for cat in existing_categories}
 new_categories = sorted(set(item["type"]["name"] for item in quartzy_items))
 
 logging.debug("Syncing resources categories...")
@@ -178,8 +164,9 @@ for category in new_categories:
         continue
     # generate random color for category
     color = "#{:06x}".format(random.randint(0, 0xFFFFFF))
-    _, status, headers = itemsTypesApi.post_items_types_with_http_info(
-        body={"title": category, "color": color}
+    _, status, headers = resourcesCategoriesApi.post_team_one_rescat_with_http_info(
+        TEAM_ID,
+        body={"name": category, "color": color}
     )
     if status == 201:
         location = headers.get("Location", "")
@@ -303,7 +290,6 @@ for item in pbar:
 
         cat_name = item["type"]["name"]
         cat_id = category_id_map.get(cat_name)
-
         if not cat_id:
             continue
 
@@ -355,7 +341,7 @@ for item in pbar:
         else:
             # POST new item (only with category_id)
             _, status_code, headers = itemsApi.post_item_with_http_info(body={
-                "category_id": cat_id
+                "category": cat_id
             })
             location = headers.get("Location", "")
             item_id = int(location.rstrip("/").split("/")[-1])

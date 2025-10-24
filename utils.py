@@ -31,7 +31,7 @@ def compute_reminder_date(expiration_date_str, auto_reminder):
     return reminder_date.strftime("%Y-%m-%d")
 
 # fetch all quartzy items, while taking into account the pagination
-def fetch_all_quartzy_items(api_url, headers, per_page=25, max_pages=60, verbose=False):
+def fetch_all_quartzy_items(api_url, headers, per_page=25, max_pages=80, verbose=False):
     # currently, there are like 45 pages. Can be updated accordingly in the future
     # api doesn't allow fetching only the pages to see how much there are
     from tqdm import tqdm
