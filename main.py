@@ -153,7 +153,7 @@ logging.debug(f"Total filtered Quartzy items: {len(quartzy_items)}")
 
 # Category Sync
 existing_categories = resourcesCategoriesApi.read_team_resources_categories(TEAM_ID)
-category_id_map = {cat.name: cat.id for cat in existing_categories}
+category_id_map = {cat.title: cat.id for cat in existing_categories}
 new_categories = sorted(set(item["type"]["name"] for item in quartzy_items))
 
 logging.debug("Syncing resources categories...")
