@@ -41,6 +41,9 @@ try:
 except json.JSONDecodeError as e:
     sys.exit(f"Failed to decode CATEGORIES environment variable: {e}")
 
+# Categories retrieved via API belong to the current team linked to TEAM_ID = "current"
+TEAM_ID = "current"
+
 #########################
 #      ELAB CONFIG      #
 #########################
@@ -97,7 +100,7 @@ api_client.set_default_header(header_name="Authorization", header_value=ELABFTW_
 api_client.set_default_header(header_name="X-Proxy-Trace", header_value="quartzy2elabftw")
 
 itemsApi = elabapi_python.ItemsApi(api_client)
-itemsTypesApi = elabapi_python.ItemsTypesApi(api_client)
+resourcesCategoriesApi = elabapi_python.ResourcesCategoriesApi(api_client)
 infoApi = elabapi_python.InfoApi(api_client)
 
 #########################
@@ -166,8 +169,8 @@ logging.debug(f"Total filtered Quartzy items: {len(quartzy_items)}")
 #########################
 
 # Category Sync
-existing_types = itemsTypesApi.read_items_types()
-category_id_map = {cat.title: cat.id for cat in existing_types}
+existing_categories = resourcesCategoriesApi.read_team_resources_categories(TEAM_ID)
+category_id_map = {cat.title: cat.id for cat in existing_categories}
 new_categories = sorted(set(item["type"]["name"] for item in quartzy_items))
 
 logging.debug("Syncing resources categories...")
@@ -178,8 +181,9 @@ for category in new_categories:
         continue
     # generate random color for category
     color = "#{:06x}".format(random.randint(0, 0xFFFFFF))
-    _, status, headers = itemsTypesApi.post_items_types_with_http_info(
-        body={"title": category, "color": color}
+    _, status, headers = resourcesCategoriesApi.post_team_one_rescat_with_http_info(
+        TEAM_ID,
+        body={"name": category, "color": color}
     )
     if status == 201:
         location = headers.get("Location", "")
@@ -303,7 +307,6 @@ for item in pbar:
 
         cat_name = item["type"]["name"]
         cat_id = category_id_map.get(cat_name)
-
         if not cat_id:
             continue
 
@@ -355,7 +358,7 @@ for item in pbar:
         else:
             # POST new item (only with category_id)
             _, status_code, headers = itemsApi.post_item_with_http_info(body={
-                "category_id": cat_id
+                "category": cat_id
             })
             location = headers.get("Location", "")
             item_id = int(location.rstrip("/").split("/")[-1])

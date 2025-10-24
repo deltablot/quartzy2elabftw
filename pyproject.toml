@@ -5,7 +5,7 @@ description = "Import and synchronize Quartzy entries into eLabFTW as read only 
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "elabapi-python>=5.2.3",
+    "elabapi-python==5.3.1",
     "python-dotenv>=1.1.1",
     "requests>=2.32.4",
     "tqdm>=4.67.1",
