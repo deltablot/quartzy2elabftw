@@ -106,10 +106,8 @@ retry_strategy = Retry(
     total=5, # total retries
     backoff_factor=1, # exponential backoff (1, 2, 4, 8 etc.)
     status_forcelist=[500, 502, 503, 504],
-     # retry idempotent methods and PATCH.
-     # avoid retrying POST to prevent duplicate resource creation
-     # if the server processes the request but returns a 5xx.
-    allowed_methods=frozenset({"DELETE", "GET", "HEAD", "OPTIONS", "PUT", "PATCH", "TRACE"}),
+     # do not retry POST methods to prevent duplicate resource creation
+    allowed_methods=frozenset({'GET','PATCH'}),
 )
 
 api_client.rest_client.pool_manager.connection_pool_kw["retries"] = retry_strategy
@@ -276,7 +274,8 @@ logging.debug("Pushing Quartzy Inventory to eLabFTW...")
 existing_qid_map = {}
 
 try:
-    response = itemsApi.read_items(_preload_content=False, limit=1500)
+    # todo: remove limit when eLabFTW instance is upgraded to latest versions: limit is removed when not passed explicitly
+    response = itemsApi.read_items(_preload_content=False, limit=99999)
     items = json.loads(response.data.decode("utf-8"))
 except Exception as e:
     logging.error(f"Failed to fetch existing items: {e}")
