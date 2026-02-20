@@ -106,7 +106,7 @@ retry_strategy = Retry(
     total=5, # total retries
     backoff_factor=1, # exponential backoff (1, 2, 4, 8 etc.)
     status_forcelist=[500, 502, 503, 504],
-     # do not retry POST methods to prevent duplicate resource creation
+    # do not retry POST methods to prevent duplicate resource creation
     allowed_methods=frozenset({'GET','PATCH'}),
 )
 
@@ -198,7 +198,7 @@ for category in new_categories:
         except Exception:
             logging.exception(f"Couldn't parse ID from Location header: {location}")
     else:
-        logging.exception(f"Failed to create category '{category}', status: {status}")
+        logging.error(f"Failed to create category '{category}', status: {status}")
 
 def build_metadata(item):
     qid = item.get("id")
