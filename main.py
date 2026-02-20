@@ -182,7 +182,7 @@ for category in new_categories:
     # generate random color for category
     color = "#{:06x}".format(random.randint(0, 0xFFFFFF))
     try:
-        _, status, headers = resourcesCategoriesApi.post_team_one_rescat_with_http_info(
+        _, status, resp_headers = resourcesCategoriesApi.post_team_one_rescat_with_http_info(
             TEAM_ID,
             body={"name": category, "color": color}
         )
@@ -190,7 +190,7 @@ for category in new_categories:
         logging.error(f"Failed to create category '{category}': {e}")
         continue
     if status == 201:
-        location = headers.get("Location", "")
+        location = resp_headers.get("Location", "")
         try:
             new_id = int(location.rstrip("/").split("/")[-1])
             category_id_map[category] = new_id
