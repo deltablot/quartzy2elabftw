@@ -14,6 +14,7 @@ import logging
 from tqdm import tqdm  # as we import 1000+ items, display a progress bar
 import argparse
 import urllib3
+from urllib3.util.retry import Retry
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -49,6 +50,8 @@ TEAM_ID = "current"
 #########################
 
 ELABFTW_HOST_URL = os.getenv('ELABFTW_HOST_URL') or sys.exit('ELABFTW_HOST_URL environment variable not set')
+# normalize host URL to avoid trailing slash which would produce double slashes in generated API paths (e.g. /api/v2//items)
+ELABFTW_HOST_URL = ELABFTW_HOST_URL.rstrip('/')
 ELABFTW_API_KEY = os.getenv('ELABFTW_API_KEY') or sys.exit('ELABFTW_API_KEY environment variable not set')
 
 #########################
@@ -98,6 +101,16 @@ api_client = elabapi_python.ApiClient(configuration)
 api_client.set_default_header(header_name="Authorization", header_value=ELABFTW_API_KEY)
 # filter eLabFTW traffic in mitmproxy
 api_client.set_default_header(header_name="X-Proxy-Trace", header_value="quartzy2elabftw")
+# Configure automatic retries on transient HTTP errors (e.g. brief connection drops, nginx reloads,
+# php-fpm restarts). This prevents the sync job from failing on temporary network/server issues.
+retry_strategy = Retry(
+    total=5, # total retries
+    backoff_factor=1, # exponential backoff (1, 2, 4, 8 etc.)
+    status_forcelist=[500, 502, 503, 504],
+    allowed_methods=False, # retry ALL methods including PATCH
+)
+
+api_client.rest_client.pool_manager.connection_pool_kw["retries"] = retry_strategy
 
 itemsApi = elabapi_python.ItemsApi(api_client)
 resourcesCategoriesApi = elabapi_python.ResourcesCategoriesApi(api_client)
@@ -152,7 +165,11 @@ logging.debug(f"Total filtered Quartzy items: {len(quartzy_items)}")
 #########################
 
 # Category Sync
-existing_categories = resourcesCategoriesApi.read_team_resources_categories(TEAM_ID)
+try:
+    existing_categories = resourcesCategoriesApi.read_team_resources_categories(TEAM_ID)
+except Exception as e:
+    logging.error(f"Failed to fetch resource categories: {e}")
+    sys.exit(1)
 category_id_map = {cat.title: cat.id for cat in existing_categories}
 new_categories = sorted(set(item["type"]["name"] for item in quartzy_items))
 
@@ -164,10 +181,14 @@ for category in new_categories:
         continue
     # generate random color for category
     color = "#{:06x}".format(random.randint(0, 0xFFFFFF))
-    _, status, headers = resourcesCategoriesApi.post_team_one_rescat_with_http_info(
-        TEAM_ID,
-        body={"name": category, "color": color}
-    )
+    try:
+        _, status, headers = resourcesCategoriesApi.post_team_one_rescat_with_http_info(
+            TEAM_ID,
+            body={"name": category, "color": color}
+        )
+    except Exception as e:
+        logging.error(f"Failed to create category '{category}': {e}")
+        continue
     if status == 201:
         location = headers.get("Location", "")
         try:
@@ -252,8 +273,12 @@ def build_metadata(item):
 logging.debug("Pushing Quartzy Inventory to eLabFTW...")
 existing_qid_map = {}
 
-response = itemsApi.read_items(_preload_content=False, limit=1500)  # quartzy data has proven to be more than 1300
-items = json.loads(response.data.decode("utf-8"))
+try:
+    response = itemsApi.read_items(_preload_content=False, limit=1500)
+    items = json.loads(response.data.decode("utf-8"))
+except Exception as e:
+    logging.error(f"Failed to fetch existing items: {e}")
+    sys.exit(1)
 
 for elab_item in items:
     metadata_raw = elab_item.get("metadata")
