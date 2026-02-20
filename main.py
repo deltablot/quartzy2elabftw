@@ -168,7 +168,7 @@ logging.debug(f"Total filtered Quartzy items: {len(quartzy_items)}")
 try:
     existing_categories = resourcesCategoriesApi.read_team_resources_categories(TEAM_ID)
 except Exception as e:
-    logging.error(f"Failed to fetch resource categories: {e}")
+    logging.exception(f"Failed to fetch resource categories: {e}")
     sys.exit(1)
 category_id_map = {cat.title: cat.id for cat in existing_categories}
 new_categories = sorted(set(item["type"]["name"] for item in quartzy_items))
@@ -187,7 +187,7 @@ for category in new_categories:
             body={"name": category, "color": color}
         )
     except Exception as e:
-        logging.error(f"Failed to create category '{category}': {e}")
+        logging.exception(f"Failed to create category '{category}': {e}")
         continue
     if status == 201:
         location = resp_headers.get("Location", "")
@@ -196,9 +196,9 @@ for category in new_categories:
             category_id_map[category] = new_id
             logging.debug(f"Created category: {category} (ID: {new_id})")
         except Exception:
-            logging.error(f"Couldn't parse ID from Location header: {location}")
+            logging.exception(f"Couldn't parse ID from Location header: {location}")
     else:
-        logging.error(f"Failed to create category '{category}', status: {status}")
+        logging.exception(f"Failed to create category '{category}', status: {status}")
 
 def build_metadata(item):
     qid = item.get("id")
@@ -278,7 +278,7 @@ try:
     response = itemsApi.read_items(_preload_content=False, limit=99999)
     items = json.loads(response.data.decode("utf-8"))
 except Exception as e:
-    logging.error(f"Failed to fetch existing items: {e}")
+    logging.exception(f"Failed to fetch existing items: {e}")
     sys.exit(1)
 
 for elab_item in items:
@@ -299,7 +299,7 @@ for elab_item in items:
         else:
             continue
     except Exception as e:
-        logging.error(f"Failed to parse metadata for item ID {elab_item.get('id')}: {e}")
+        logging.exception(f"Failed to parse metadata for item ID {elab_item.get('id')}: {e}")
 
 logging.debug(f"Found {len(existing_qid_map)} existing items with Quartzy ID.")
 
@@ -385,7 +385,7 @@ for item in pbar:
 
             pbar.set_postfix(created=created, updated=updated, refresh=False)
     except Exception as e:
-        logging.error(f"Exception on item '{name}': {e}")
+        logging.exception(f"Exception on item '{name}': {e}")
 
 total = len(quartzy_items)
 
