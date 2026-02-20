@@ -16,12 +16,11 @@ import argparse
 import urllib3
 from urllib3.util.retry import Retry
 from dotenv import load_dotenv
-
-load_dotenv()
-
 # convert auto_reminder date from string to date (e.g. "1WEEK" -> date - 1 week)
 # fetch_all_quartzy_items needed as there's pagination logic not inherited from the Public API
 from utils import compute_reminder_date, fetch_all_quartzy_items
+
+load_dotenv()
 
 #########################
 #      API CONFIG       #
