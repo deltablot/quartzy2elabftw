@@ -72,15 +72,6 @@ uv run main.py --verbose
 ## Run with Docker
 
 ```bash
-# Clone the repository
-git clone git@github.com:deltablot/quartzy2elabftw.git
-
-# Get into the folder
-cd quartzy2elabftw
-
-# Build the image
-docker build -t quartzy2elabftw .
-
 # Create and edit the .env file (not included in the image)
 cp .env.dist .env
 chmod 600 .env
@@ -93,7 +84,7 @@ Otherwise, just run with the command:
 
 ```bash
 # Run the sync (once)
-docker run --rm --env-file .env quartzy2elabftw
+docker run --rm --env-file .env ghcr.io/deltablot/quartzy2elabftw
 ```
 
 ### With docker-compose
@@ -127,7 +118,7 @@ When running locally, with eLabFTW on the same host (linux):
 ```bash
 docker run --rm --env-file .env --add-host=elab.local:host-gateway quartzy2elabftw --insecure
 # with mitmproxy setup
-# docker run --rm --env-file .env --add-host=host.docker.internal:host-gateway --add-host=elab.local:host-gateway -e HTTP_PROXY=http://host.docker.internal:8080 -e HTTPS_PROXY=http://host.docker.internal:8080 -e NO_PROXY= -e REQUESTS_CA_BUNDLE=/mitmproxy/mitmproxy-ca.pem -v /path/to/your/.mitmproxy:/mitmproxy:ro,Z quartzy2elabftw --insecure
+# docker run --rm --env-file .env --add-host=host.docker.internal:host-gateway --add-host=elab.local:host-gateway -e HTTP_PROXY=http://host.docker.internal:8080 -e HTTPS_PROXY=http://host.docker.internal:8080 -e NO_PROXY= -e REQUESTS_CA_BUNDLE=/mitmproxy/mitmproxy-ca.pem -v /path/to/your/.mitmproxy:/mitmproxy:ro,Z ghcr.io/deltablot/quartzy2elabftw --insecure
 ```
 
 ## Automation
@@ -142,7 +133,7 @@ Run every day at 07:30:
 
 ```cron
 # Every day at 07:30 - edit the path to point to the script's directory
-30 07 * * * /usr/bin/docker run --rm --env-file /path/to/quartzy2elabftw/.env --add-host=host.docker.internal:host-gateway --add-host=elab.local:host-gateway quartzy2elabftw
+30 07 * * * /usr/bin/docker run --rm --env-file /path/to/quartzy2elabftw/.env --add-host=host.docker.internal:host-gateway --add-host=elab.local:host-gateway ghcr.io/deltablot/quartzy2elabftw
 ```
 
 ## Caveats

@@ -1,6 +1,6 @@
 services:
   quartzy2elabftw:
-    image: quartzy2elabftw
+    image: ghcr.io/deltablot/quartzy2elabftw
     env_file: .env
     environment:
       HTTPS_PROXY: http://host.docker.internal:8080
