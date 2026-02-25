@@ -1,7 +1,6 @@
 -- ===============================
 -- DEDUPLICATE QUARTZY ITEMS
 -- ===============================
-SET autocommit = 0;
 START TRANSACTION;
 
 CREATE TEMPORARY TABLE dedup_map AS
