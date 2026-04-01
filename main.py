@@ -16,8 +16,6 @@ import argparse
 import urllib3
 from urllib3.util.retry import Retry
 from dotenv import load_dotenv
-# use a hash for the sync reference and prevent useless fetches
-import hashlib
 # convert auto_reminder date from string to date (e.g. "1WEEK" -> date - 1 week)
 # fetch_all_quartzy_items needed as there's pagination logic not inherited from the Public API
 from utils import compute_reminder_date, fetch_all_quartzy_items
@@ -143,6 +141,13 @@ logging.debug(f"Categories allowed : {ALLOWED_CATEGORIES}")
 #   QUARTZY INVENTORY   #
 #########################
 
+def metadata_changed(existing_metadata_raw, new_metadata_dict):
+    existing_metadata = json.loads(existing_metadata_raw) if isinstance(existing_metadata_raw, str) else existing_metadata_raw
+    existing_metadata_json = json.dumps(existing_metadata, sort_keys=True)
+    new_metadata_json = json.dumps(new_metadata_dict, sort_keys=True)
+
+    return existing_metadata_json != new_metadata_json
+
 def normalize_metadata(metadata):
     if not metadata:
         return {}
@@ -150,9 +155,6 @@ def normalize_metadata(metadata):
         metadata = json.loads(metadata)
     extra = metadata.get("extra_fields", {})
     return {k: v for k, v in extra.items() if v.get("value") not in ("", None)}
-
-def compute_metadata_hash(metadata_dict):
-    return hashlib.md5(json.dumps(metadata_dict, sort_keys=True).encode()).hexdigest()
 
 # Quartzy public API authorizations (AccessToken)
 headers = {"Access-Token": QUARTZY_TOKEN, "Accept": "application/json"}
@@ -175,7 +177,6 @@ try:
 except Exception as e:
     logging.exception(f"Failed to fetch resource categories: {e}")
     sys.exit(1)
-
 category_id_map = {cat.title: cat.id for cat in existing_categories}
 new_categories = sorted(set(item["type"]["name"] for item in quartzy_items))
 
@@ -267,10 +268,6 @@ def build_metadata(item):
     # remove fields with no values
     cleaned = {k: v for k, v in extra_fields.items() if v.get("value")}
 
-    # add hash
-    hash_value = compute_metadata_hash({"extra_fields": cleaned})
-    cleaned["Sync Hash"] = {"type": "text", "value": hash_value}
-
     return {"extra_fields": cleaned}
 
 #########################
@@ -352,11 +349,7 @@ for item in pbar:
                 "extra_fields": new_metadata_full.get("extra_fields", {})
             }
 
-            # fast hash check
-            existing_hash = existing_metadata.get("extra_fields", {}).get("Sync Hash", {}).get("value")
-            new_hash = new_metadata_dict["extra_fields"].get("Sync Hash", {}).get("value")
-
-            if existing_hash and new_hash and existing_hash == new_hash:
+            if not metadata_changed(existing_metadata_raw, new_metadata_dict):
                 continue
 
             # safe fallback
