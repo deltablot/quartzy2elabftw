@@ -16,6 +16,8 @@ import argparse
 import urllib3
 from urllib3.util.retry import Retry
 from dotenv import load_dotenv
+# use a hash for the sync reference and prevent useless fetches
+import hashlib
 # convert auto_reminder date from string to date (e.g. "1WEEK" -> date - 1 week)
 # fetch_all_quartzy_items needed as there's pagination logic not inherited from the Public API
 from utils import compute_reminder_date, fetch_all_quartzy_items
@@ -146,8 +148,18 @@ def metadata_changed(existing_metadata_raw, new_metadata_dict):
     existing_metadata = json.loads(existing_metadata_raw) if isinstance(existing_metadata_raw, str) else existing_metadata_raw
     existing_metadata_json = json.dumps(existing_metadata, sort_keys=True)
     new_metadata_json = json.dumps(new_metadata_dict, sort_keys=True)
-
     return existing_metadata_json != new_metadata_json
+
+def normalize_metadata(metadata):
+    if not metadata:
+        return {}
+    if isinstance(metadata, str):
+        metadata = json.loads(metadata)
+    extra = metadata.get("extra_fields", {})
+    return {k: v for k, v in extra.items() if v.get("value") not in ("", None)}
+
+def compute_metadata_hash(metadata_dict):
+    return hashlib.md5(json.dumps(metadata_dict, sort_keys=True).encode()).hexdigest()
 
 # Quartzy public API authorizations (AccessToken)
 headers = {"Access-Token": QUARTZY_TOKEN, "Accept": "application/json"}
@@ -170,6 +182,7 @@ try:
 except Exception as e:
     logging.exception(f"Failed to fetch resource categories: {e}")
     sys.exit(1)
+
 category_id_map = {cat.title: cat.id for cat in existing_categories}
 new_categories = sorted(set(item["type"]["name"] for item in quartzy_items))
 
@@ -261,11 +274,11 @@ def build_metadata(item):
     # remove fields with no values
     cleaned = {k: v for k, v in extra_fields.items() if v.get("value")}
 
-    if not cleaned:
-        raise ValueError(f"[ERROR] Empty metadata for item: {item.get('name')}")
+    # add hash
+    hash_value = compute_metadata_hash({"extra_fields": cleaned})
+    cleaned["Sync Hash"] = {"type": "text", "value": hash_value}
 
     return {"extra_fields": cleaned}
-
 
 #########################
 #   eLabFTW resources   #
@@ -295,7 +308,7 @@ for elab_item in items:
 
         qid = metadata.get("extra_fields", {}).get("Quartzy ID", {}).get("value")
         if qid:
-            existing_qid_map[qid] = elab_item["id"]
+            existing_qid_map[qid] = elab_item
         else:
             continue
     except Exception as e:
@@ -303,7 +316,6 @@ for elab_item in items:
 
 logging.debug(f"Found {len(existing_qid_map)} existing items with Quartzy ID.")
 
-# Loop
 created, updated = 0, 0
 
 pbar = tqdm(quartzy_items, desc="Syncing Quartzy items", unit="item", disable=not args.verbose)
@@ -332,13 +344,9 @@ for item in pbar:
 
         if qid in existing_qid_map:
             # PATCH existing item
-            item_id = existing_qid_map[qid]
+            existing_item = existing_qid_map[qid]
+            item_id = existing_item["id"]
 
-            # before sending a patch request, check if the data has changed. If not, do not send useless request
-            response = itemsApi.get_item(item_id, _preload_content=False)
-            existing_item = json.loads(response.data.decode("utf-8"))
-
-            # Get and parse existing metadata
             existing_metadata_raw = existing_item.get("metadata")
             existing_metadata = (
                 json.loads(existing_metadata_raw)
@@ -346,14 +354,21 @@ for item in pbar:
                 else existing_metadata_raw
             )
 
-            # Build new metadata dict to compare with existing
+            new_metadata_full = build_metadata(item)
             new_metadata_dict = {
-                "extra_fields": build_metadata(item).get("extra_fields", {})
+                "extra_fields": new_metadata_full.get("extra_fields", {})
             }
 
-            # use metadata_changed function to compare
-            if not metadata_changed(existing_metadata_raw, new_metadata_dict):
-                continue  # Skip patching, no change in metadata
+            # fast hash check
+            existing_hash = existing_metadata.get("extra_fields", {}).get("Sync Hash", {}).get("value")
+            new_hash = new_metadata_dict["extra_fields"].get("Sync Hash", {}).get("value")
+
+            if existing_hash and new_hash and existing_hash == new_hash:
+                continue
+
+            # safe fallback
+            if normalize_metadata(existing_metadata) == normalize_metadata(new_metadata_dict):
+                continue
 
             patch_payload = {
                 "title": item["name"],
