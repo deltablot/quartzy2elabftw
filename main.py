@@ -143,13 +143,6 @@ logging.debug(f"Categories allowed : {ALLOWED_CATEGORIES}")
 #   QUARTZY INVENTORY   #
 #########################
 
-# compare existing metadata & incoming metadata
-def metadata_changed(existing_metadata_raw, new_metadata_dict):
-    existing_metadata = json.loads(existing_metadata_raw) if isinstance(existing_metadata_raw, str) else existing_metadata_raw
-    existing_metadata_json = json.dumps(existing_metadata, sort_keys=True)
-    new_metadata_json = json.dumps(new_metadata_dict, sort_keys=True)
-    return existing_metadata_json != new_metadata_json
-
 def normalize_metadata(metadata):
     if not metadata:
         return {}
