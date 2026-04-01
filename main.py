@@ -113,6 +113,16 @@ retry_strategy = Retry(
 )
 
 api_client.rest_client.pool_manager.connection_pool_kw["retries"] = retry_strategy
+# --- request counters (simple global hook) ---
+REQUEST_COUNT = {"GET": 0, "PATCH": 0, "POST": 0, "TOTAL": 0}
+original_request = api_client.rest_client.request
+def counting_request(method, url, *args, **kwargs):
+    method_upper = method.upper()
+    if method_upper in REQUEST_COUNT:
+        REQUEST_COUNT[method_upper] += 1
+    REQUEST_COUNT["TOTAL"] += 1
+    return original_request(method, url, *args, **kwargs)
+api_client.rest_client.request = counting_request
 
 itemsApi = elabapi_python.ItemsApi(api_client)
 resourcesCategoriesApi = elabapi_python.ResourcesCategoriesApi(api_client)
@@ -412,3 +422,10 @@ if updated == 0:
     logging.debug(f"Done: {updated}/{total} item{'s' if total != 1 else ''} needed update.")
 else:
     logging.debug(f"Done: {updated}/{total} item{'s' if updated != 1 else ''} successfully updated.")
+
+if args.verbose:
+    logging.debug("\n--- API CALL STATS ---")
+    logging.debug(f"GET:   {REQUEST_COUNT['GET']}")
+    logging.debug(f"PATCH: {REQUEST_COUNT['PATCH']}")
+    logging.debug(f"POST:  {REQUEST_COUNT['POST']}")
+    logging.debug(f"TOTAL: {REQUEST_COUNT['TOTAL']}")
