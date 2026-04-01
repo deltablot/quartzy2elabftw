@@ -266,7 +266,6 @@ def build_metadata(item):
 
     return {"extra_fields": cleaned}
 
-
 #########################
 #   eLabFTW resources   #
 #########################
@@ -295,7 +294,7 @@ for elab_item in items:
 
         qid = metadata.get("extra_fields", {}).get("Quartzy ID", {}).get("value")
         if qid:
-            existing_qid_map[qid] = elab_item["id"]
+            existing_qid_map[qid] = elab_item
         else:
             continue
     except Exception as e:
@@ -303,7 +302,6 @@ for elab_item in items:
 
 logging.debug(f"Found {len(existing_qid_map)} existing items with Quartzy ID.")
 
-# Loop
 created, updated = 0, 0
 
 pbar = tqdm(quartzy_items, desc="Syncing Quartzy items", unit="item", disable=not args.verbose)
@@ -332,13 +330,9 @@ for item in pbar:
 
         if qid in existing_qid_map:
             # PATCH existing item
-            item_id = existing_qid_map[qid]
+            existing_item = existing_qid_map[qid]
+            item_id = existing_item["id"]
 
-            # before sending a patch request, check if the data has changed. If not, do not send useless request
-            response = itemsApi.get_item(item_id, _preload_content=False)
-            existing_item = json.loads(response.data.decode("utf-8"))
-
-            # Get and parse existing metadata
             existing_metadata_raw = existing_item.get("metadata")
             existing_metadata = (
                 json.loads(existing_metadata_raw)
@@ -346,12 +340,11 @@ for item in pbar:
                 else existing_metadata_raw
             )
 
-            # Build new metadata dict to compare with existing
+            new_metadata_full = build_metadata(item)
             new_metadata_dict = {
-                "extra_fields": build_metadata(item).get("extra_fields", {})
+                "extra_fields": new_metadata_full.get("extra_fields", {})
             }
 
-            # use metadata_changed function to compare
             if not metadata_changed(existing_metadata_raw, new_metadata_dict):
                 continue  # Skip patching, no change in metadata
 
