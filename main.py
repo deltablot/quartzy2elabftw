@@ -261,6 +261,9 @@ def build_metadata(item):
     # remove fields with no values
     cleaned = {k: v for k, v in extra_fields.items() if v.get("value")}
 
+    if not cleaned:
+            raise ValueError(f"[ERROR] Empty metadata for item: {item.get('name')}")
+
     return {"extra_fields": cleaned}
 
 #########################
@@ -343,7 +346,7 @@ for item in pbar:
             }
 
             if not metadata_changed(existing_metadata_raw, new_metadata_dict):
-                continue # Skip patching, no change in metadata
+                continue  # Skip patching, no change in metadata
 
             patch_payload = {
                 "title": item["name"],
