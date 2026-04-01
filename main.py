@@ -262,7 +262,7 @@ def build_metadata(item):
     cleaned = {k: v for k, v in extra_fields.items() if v.get("value")}
 
     if not cleaned:
-            raise ValueError(f"[ERROR] Empty metadata for item: {item.get('name')}")
+        raise ValueError(f"[ERROR] Empty metadata for item: {item.get('name')}")
 
     return {"extra_fields": cleaned}
 
