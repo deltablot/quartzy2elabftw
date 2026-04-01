@@ -141,20 +141,13 @@ logging.debug(f"Categories allowed : {ALLOWED_CATEGORIES}")
 #   QUARTZY INVENTORY   #
 #########################
 
+# compare existing metadata & incoming metadata
 def metadata_changed(existing_metadata_raw, new_metadata_dict):
     existing_metadata = json.loads(existing_metadata_raw) if isinstance(existing_metadata_raw, str) else existing_metadata_raw
     existing_metadata_json = json.dumps(existing_metadata, sort_keys=True)
     new_metadata_json = json.dumps(new_metadata_dict, sort_keys=True)
 
     return existing_metadata_json != new_metadata_json
-
-def normalize_metadata(metadata):
-    if not metadata:
-        return {}
-    if isinstance(metadata, str):
-        metadata = json.loads(metadata)
-    extra = metadata.get("extra_fields", {})
-    return {k: v for k, v in extra.items() if v.get("value") not in ("", None)}
 
 # Quartzy public API authorizations (AccessToken)
 headers = {"Access-Token": QUARTZY_TOKEN, "Accept": "application/json"}
@@ -350,11 +343,7 @@ for item in pbar:
             }
 
             if not metadata_changed(existing_metadata_raw, new_metadata_dict):
-                continue
-
-            # safe fallback
-            if normalize_metadata(existing_metadata) == normalize_metadata(new_metadata_dict):
-                continue
+                continue # Skip patching, no change in metadata
 
             patch_payload = {
                 "title": item["name"],
