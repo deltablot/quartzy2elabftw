@@ -84,3 +84,23 @@ def fetch_all_quartzy_items(api_url, headers, per_page=25, max_pages=80, verbose
         logging.info(f"Total fetched: {len(all_items)} items.")
 
     return all_items
+
+
+# The pinned generated API client cannot request full=1 on GET /items.
+def fetch_existing_elabftw_items(host_url, api_key, *, insecure=False, limit=99999):
+    import requests
+
+    response = requests.get(
+        f"{host_url.rstrip('/')}/items",
+        headers={"Authorization": api_key, "Accept": "application/json"},
+        params={"limit": limit, "full": 1},
+        timeout=60,
+        verify=not insecure,
+    )
+    response.raise_for_status()
+    items = response.json()
+    if not isinstance(items, list):
+        raise ValueError("Unexpected eLabFTW items response: expected an array")
+    if any(not isinstance(item, dict) or "metadata" not in item for item in items):
+        raise ValueError("eLabFTW items response is missing metadata; aborting to prevent duplicates")
+    return items

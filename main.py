@@ -18,7 +18,7 @@ from urllib3.util.retry import Retry
 from dotenv import load_dotenv
 # convert auto_reminder date from string to date (e.g. "1WEEK" -> date - 1 week)
 # fetch_all_quartzy_items needed as there's pagination logic not inherited from the Public API
-from utils import compute_reminder_date, fetch_all_quartzy_items
+from utils import compute_reminder_date, fetch_all_quartzy_items, fetch_existing_elabftw_items
 
 load_dotenv()
 
@@ -273,9 +273,10 @@ logging.debug("Pushing Quartzy Inventory to eLabFTW...")
 existing_qid_map = {}
 
 try:
-    # todo: remove limit when eLabFTW instance is upgraded to latest versions: limit is removed when not passed explicitly
-    response = itemsApi.read_items(_preload_content=False, limit=99999)
-    items = json.loads(response.data.decode("utf-8"))
+    # The pinned 5.3.1 client does not support full=1, required since eLabFTW 5.6.
+    items = fetch_existing_elabftw_items(ELABFTW_HOST_URL, ELABFTW_API_KEY, insecure=args.insecure)
+    logging.debug("GET /items?limit=99999&full=1: %d items, %d with nonempty metadata",
+                  len(items), sum(bool(item["metadata"]) for item in items))
 except Exception as e:
     logging.exception(f"Failed to fetch existing items: {e}")
     sys.exit(1)
