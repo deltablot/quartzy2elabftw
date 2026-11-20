@@ -113,7 +113,7 @@ retry_strategy = Retry(
 api_client.rest_client.pool_manager.connection_pool_kw["retries"] = retry_strategy
 
 itemsApi = elabapi_python.ItemsApi(api_client)
-resourcesCategoriesApi = elabapi_python.ResourcesCategoriesApi(api_client)
+resourcesCategoriesApi = elabapi_python.ResourceCategoriesApi(api_client)
 infoApi = elabapi_python.InfoApi(api_client)
 
 #########################
@@ -273,9 +273,12 @@ logging.debug("Pushing Quartzy Inventory to eLabFTW...")
 existing_qid_map = {}
 
 try:
-    # todo: remove limit when eLabFTW instance is upgraded to latest versions: limit is removed when not passed explicitly
-    response = itemsApi.read_items(_preload_content=False, limit=99999)
+    # since eLabFTW >5.6, full=1 is required to include metadata, which contains
+    # the Quartzy IDs used to identify existing items
+    response = itemsApi.read_items(_preload_content=False, full=1)
     items = json.loads(response.data.decode("utf-8"))
+    if not isinstance(items, list) or any(not isinstance(item, dict) or "metadata" not in item for item in items):
+        raise ValueError("eLabFTW items response is missing metadata; aborting to prevent duplicates")
 except Exception as e:
     logging.exception(f"Failed to fetch existing items: {e}")
     sys.exit(1)
