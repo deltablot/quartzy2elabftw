@@ -273,7 +273,7 @@ logging.debug("Pushing Quartzy Inventory to eLabFTW...")
 existing_qid_map = {}
 
 try:
-    response = itemsApi.read_items(_preload_content=False, limit=99999, full=1)
+    response = itemsApi.read_items(_preload_content=False, full=1)
     items = json.loads(response.data.decode("utf-8"))
     if not isinstance(items, list) or any(not isinstance(item, dict) or "metadata" not in item for item in items):
         raise ValueError("eLabFTW items response is missing metadata; aborting to prevent duplicates")
