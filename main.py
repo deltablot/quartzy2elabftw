@@ -356,10 +356,10 @@ for item in pbar:
                 "body": body,
                 "metadata": json.dumps(new_metadata_dict)
             }
-            itemsApi.patch_item(item_id, body=patch_payload)
+            itemsApi.patch_item(id=item_id, body=patch_payload)
             logging.debug(f"Updated item '{item['name']}' (ID: {item_id})")
             updated += 1
-            itemsApi.patch_item(item_id, body={"action": "forcelock"})
+            itemsApi.patch_item(id=item_id, body={"action": "forcelock"})
         else:
             # POST new item (only with category_id)
             _, status_code, headers = itemsApi.post_item_with_http_info(body={
@@ -374,10 +374,10 @@ for item in pbar:
                 "body": body,
                 "metadata": json.dumps(build_metadata(item))
             }
-            itemsApi.patch_item(item_id, body=patch_payload)
+            itemsApi.patch_item(id=item_id, body=patch_payload)
             logging.debug(f"Created item '{item['name']}' (ID: {item_id})")
             created += 1
-            itemsApi.patch_item(item_id, body={"action": "forcelock"})
+            itemsApi.patch_item(id=item_id, body={"action": "forcelock"})
 
             pbar.set_postfix(created=created, updated=updated, refresh=False)
     except Exception as e:
