@@ -113,7 +113,7 @@ retry_strategy = Retry(
 api_client.rest_client.pool_manager.connection_pool_kw["retries"] = retry_strategy
 
 itemsApi = elabapi_python.ItemsApi(api_client)
-resourcesCategoriesApi = elabapi_python.ResourcesCategoriesApi(api_client)
+resourcesCategoriesApi = elabapi_python.ResourceCategoriesApi(api_client)
 infoApi = elabapi_python.InfoApi(api_client)
 
 #########################
