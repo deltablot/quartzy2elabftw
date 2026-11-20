@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.12"
 
 [[package]]
@@ -57,7 +57,7 @@ wheels = [
 
 [[package]]
 name = "elabapi-python"
-version = "5.3.1"
+version = "6.0.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "certifi" },
@@ -65,9 +65,9 @@ dependencies = [
     { name = "six" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/28/18/32adea48c3fa8fff79579be149a0b2c28c3db4ce5300c4a64e8db121970a/elabapi_python-5.3.1.tar.gz", hash = "sha256:576849518beb8c2f90164f13e7fbc1778f5522e51a4113bff340c208a56841f2", size = 111925, upload-time = "2025-10-23T14:58:56.384Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/69/60/5471d73212619e87e23f5881b80eb5a969b07615b9328949b11422fcc943/elabapi_python-6.0.1.tar.gz", hash = "sha256:e876343cf0da0213635cfe85ba66cfff551bcc4d04c351970e1207bccf0e2aed", size = 148771, upload-time = "2026-09-13T10:30:07.388Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ad/0f/49a90a3c0ed3c6012ae76790a3f008c3de73ae778584d20860c8553d6ffa/elabapi_python-5.3.1-py3-none-any.whl", hash = "sha256:09f0ddcb00d6f24cb2326ec4092c6aaf9f4743f98e1af0b7b5cf41a7e960f638", size = 335968, upload-time = "2025-10-23T14:58:55.412Z" },
+    { url = "https://files.pythonhosted.org/packages/7d/2c/c649cd6260b6065f054ae52fe6242fa17fab8f1d9fd8f6a284c7a33cd365/elabapi_python-6.0.1-py3-none-any.whl", hash = "sha256:8a0bc1588960250e4029c9c84a5f2601b270988cb68f877770b32e3f71ae935c", size = 446030, upload-time = "2026-09-13T10:30:06.205Z" },
 ]
 
 [[package]]
@@ -113,7 +113,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "elabapi-python", specifier = "==5.3.1" },
+    { name = "elabapi-python", specifier = ">=6.0.1" },
     { name = "python-dotenv", specifier = ">=1.1.1" },
     { name = "requests", specifier = ">=2.32.4" },
     { name = "tqdm", specifier = ">=4.67.1" },
